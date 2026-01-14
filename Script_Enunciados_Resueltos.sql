@@ -27,4 +27,22 @@
 	select "rating", count(rating) as "Clasificación"
 	from "film"
 	group by "rating";
---8. 
+
+--8. Encuentra el título de todas las películas que son ‘PG-13’ o tienen una duración mayor a 3 horas en la tabla film.
+	select "title"
+	from "film"
+	where "rating" = 'PG-13'
+	or "length" > 180;
+
+--9. Encuentra la variabilidad de lo que costaría reemplazar las películas.
+	select STDDEV("replacement_cost") as "Variabilidad_reemplazo_peliculas"
+	from "film";
+
+--10. Encuentra la mayor y menor duración de una película de nuestra BBDD.
+	select MAX("length") as "Mayor_Duración", MIN("length") as "Menor_Duración"
+	from "film";
+
+--11. Encuentra lo que costó el antepenúltimo alquiler ordenado por día.
+	select *
+	from "payment"
+	order by "payment_date" desc;
