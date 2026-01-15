@@ -42,7 +42,70 @@
 	select MAX("length") as "Mayor_Duración", MIN("length") as "Menor_Duración"
 	from "film";
 
---11. Encuentra lo que costó el antepenúltimo alquiler ordenado por día.
+--11. Encuentra lo que costó el antepenúltimo alquiler ordenado por día (hay muchas comrpas con la misma fecha y hora, por lo que el resultado est{a afectado por ese motivo)
 	select *
 	from "payment"
-	order by "payment_date" desc;
+	order by "payment_date" desc
+	limit 1 offset 2;
+
+--12. Encuentra el título de las películas en la tabla “film” que no sean ni ‘NC-17’ ni ‘G’ en cuanto a su clasificación.
+	select "title"
+	from "film"
+	where "rating" not in ('NC-17' , 'G');
+
+--13. Encuentra el promedio de duración de las películas para cada clasificación de la tabla film y muestra la clasificación junto con el promedio de duración.
+	select "rating" , avg("length") as "promedio_duracion"
+	from "film"
+	group by "rating"
+	order by "rating";
+
+--14. Encuentra el título de todas las películas que tengan una duración mayor a 180 minutos.
+	select "title"
+	from "film"
+	where "length" > 180;
+
+--15. ¿Cuánto dinero ha generado en total la empresa? 
+	select sum("amount") as "ganancias"
+	from "payment";
+
+--16. Muestra los 10 clientes con mayor valor de id.
+	select "first_name" , "last_name"
+	from "customer"
+	order by "customer" desc
+	limit 5;
+
+--17. Encuentra el nombre y apellido de los actores que aparecen en la película con título ‘Egg Igby’.
+--información que necesito: (film_id . title) de film (film_id . actor_id) de film_actor (actor_id . first_name . last_name) de actor	
+	
+	select a."first_name" , a."last_name"
+	from "actor" as "a"
+	inner join (
+	(select f."film_id" , fa."actor_id" ,f."title"
+	from "film" as "f"
+	inner join 
+		"film_actor" as "fa" on fa."film_id" = f."film_id")) as "ei" on a."actor_id" = ei."actor_id"
+	where ei."title" = 'EGG IGBY';
+	
+--18. Selecciona todos los nombres de las películas únicos.
+	select distinct("title")
+	from "film";
+
+--19. Encuentra el título de las películas que son comedias y tienen una duración mayor a 180 minutos en la tabla “film”.
+-- información que necesito: (film_id . title) de film (film_id . category_id) de film_category (category_id . name) category
+	select cat."title"
+	from "category" as "c"
+	inner join (
+	(select f."film_id" , fc."category_id", f."title" , f."length"
+	from "film" as "f"
+	inner join 
+		"film_category" as "fc" on fc."film_id" = f."film_id")) as "cat" on c.category_id = cat.category_id
+	where c."name" = 'Comedy' and cat."length" > 180;
+
+--20. 
+
+	select *
+	from "film";
+	select *
+	from "film_category";
+	select*
+	from "category";
