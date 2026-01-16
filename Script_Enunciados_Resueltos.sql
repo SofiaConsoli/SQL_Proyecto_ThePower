@@ -166,6 +166,10 @@ select a."first_name" , a."last_name"
 	from "rental"
 	group by date_trunc('month', "rental_date");
 
---26. 
+--26. Encuentra el promedio, la desviación estándar y varianza del total pagado.
+	select avg(amount) as "promedio" , stddev("amount") as "desviación_estándar" , variance ("amount") as "varianza"
+	from "payment";
+
+--27. ¿Qué películas se alquilan por encima del precio medio?
 
 
