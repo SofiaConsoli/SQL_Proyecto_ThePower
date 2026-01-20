@@ -42,7 +42,7 @@
 	select MAX("length") as "Mayor_Duración", MIN("length") as "Menor_Duración"
 	from "film";
 
---11. Encuentra lo que costó el antepenúltimo alquiler ordenado por día (hay muchas comrpas con la misma fecha y hora, por lo que el resultado est{a afectado por ese motivo)
+--11. Encuentra lo que costó el antepenúltimo alquiler ordenado por día (hay muchas comrpas con la misma fecha y hora, por lo que el resultado está afectado por ese motivo)
 	select *
 	from "payment"
 	order by "payment_date" desc
@@ -69,10 +69,11 @@
 	from "payment";
 
 --16. Muestra los 10 clientes con mayor valor de id.
-	select "first_name" , "last_name"
+	select concat("first_name",', ' ,"last_name") as "nombre_completo", "customer_id"
 	from "customer"
-	order by "customer" desc
-	limit 5;
+	order by "customer_id" desc
+	limit 10;
+
 
 --17. Encuentra el nombre y apellido de los actores que aparecen en la película con título ‘Egg Igby’.
 --información que necesito: (film_id . title) de film (film_id . actor_id) de film_actor (actor_id . first_name . last_name) de actor	
@@ -280,7 +281,7 @@ select a."first_name" , a."last_name"
 	from "film"
 	cross join "category";
 
-	-- No aporta valor a la consulta ya que no es una relación real entre las categorias y las peliculas, sería más útil realizar un inner join, ya que si me daría como resultado dodne haya coincidencia entre las dos tablas.
+	-- No aporta valor a la consulta ya que no da como resultado una relación real entre las categorias y las peliculas, sería más útil realizar un inner join, ya que si me daría como resultado donde haya coincidencia entre las dos tablas. El cross join es más útil en un contexto que necesite generar diferentes combinaciones o simular diferentes escenarios.
 
 --45. Encuentra los actores que han participado en películas de la categoría 'Action'.
 	select concat(a."first_name" , ', ' , a."last_name") as "nombres_actores_accion"
@@ -360,15 +361,93 @@ select a."first_name" , a."last_name"
 	order by "nombre_actores_Sci-Fi";
 
 --55. Encuentra el nombre y apellido de los actores que han actuado en películas que se alquilaron después de que la película ‘Spartacus Cheaper’ se alquilara por primera vez. Ordena los resultados alfabéticamente por apellido.
+	select distinct a."first_name" , a."last_name"
+	from "actor" as a
+	inner join "film_actor" as fa on a."actor_id" = fa."actor_id"
+	inner join "film" as f on fa."film_id" = f."film_id"
+	inner join "inventory" as i on f."film_id" = i."film_id"
+	inner join "rental" as r on i."inventory_id" = r."inventory_id"
+	where r."rental_date" > (
+		select rr."rental_date"
+		from "rental" as rr
+		inner join "inventory" as ii on rr."inventory_id" = ii."inventory_id"
+		inner join "film" as ff on ii."film_id" = ff."film_id"
+		where ff."title" = 'SPARTACUS CHEAPER'
+		order by rr."rental_date"
+		limit 1)
+	order by a."last_name";
+
 --56. Encuentra el nombre y apellido de los actores que no han actuado en ninguna película de la categoría ‘Music’.
+	select "first_name", "last_name"
+	from "actor"
+	where "actor_id" not in (
+    	select "actor_id"
+    	from "film_actor" as fa
+    	join "film_category" as fc on fc."film_id" = fa."film_id"
+   	 	join "category" as c on c."category_id" = fc."category_id"
+    	where c."name" = 'Music');
+
 --57. Encuentra el título de todas las películas que fueron alquiladas por más de 8 días.
+	select distinct f."title"
+	from "film" as f
+	join "inventory" as i on i."film_id" = f."film_id"
+	join "rental" as r on r."inventory_id" = i."inventory_id"
+	where r."return_date" is not null and r."return_date" - r."rental_date" > interval '8 days';
+
 --58. Encuentra el título de todas las películas que son de la misma categoría que ‘Animation’.
+	select f."title"
+	from "film" as f
+	inner join "film_category" as fc on f."film_id" = fc."film_id"
+	inner join "category" as c on fc."category_id" = c."category_id"
+	where c."name" = 'Animation';
+
 --59. Encuentra los nombres de las películas que tienen la misma duración que la película con el título ‘Dancing Fever’. Ordena los resultados alfabéticamente por título de película.
+	select "title"
+	from "film"
+	where "length" = (
+		select "length"
+		from "film"
+		where "title" = 'DANCING FEVER')
+	order by "title";
+
 --60. Encuentra los nombres de los clientes que han alquilado al menos 7 películas distintas. Ordena los resultados alfabéticamente por apellido.
+	select concat(c."first_name", ', ', c."last_name") as "cliente"
+	from "customer" as c
+	inner join "rental" as r on r."customer_id" = c."customer_id"
+	inner join "inventory" as i on i."inventory_id" = r."inventory_id"
+	group by c."customer_id", c."first_name", c."last_name"
+	having count(distinct i."film_id") >= 7
+	order by c."last_name";
+
 --61. Encuentra la cantidad total de películas alquiladas por categoría y muestra el nombre de la categoría junto con el recuento de alquileres.
+	select c."name" , count(r."rental_id") as "total_alquileres"
+	from "category" as c
+	join "film_category" as fc on fc."category_id" = c."category_id"
+	join "inventory" as i on i."film_id" = fc."film_id"
+	join "rental" as r on r."inventory_id" = i."inventory_id"
+	group by c."name"
+	order by c."name";
+
 --62. Encuentra el número de películas por categoría estrenadas en 2006.
+	select c."name" , count(f."film_id") as "tot_cat_2006"
+	from "film" as f
+	inner join "film_category" as fc on f."film_id" = fc."film_id"
+	inner join "category" as c on fc."category_id" = c."category_id"
+	where "release_year" = 2006
+	group by c."name";
+
 --63. Obtén todas las combinaciones posibles de trabajadores con las tiendas que tenemos.
+	select concat(s."first_name", ', ' ,s."last_name") as "nombre_completo", st."store_id"
+	from "staff" as s
+	cross join "store" as st
+	order by st."store_id";
+
 --64. Encuentra la cantidad total de películas alquiladas por cada cliente y muestra el ID del cliente, su nombre y apellido junto con la cantidad de películas alquiladas.
+	select c."customer_id", c."first_name", c."last_name", count(r."rental_id") as "tot_peliculas_alquiladas"
+	from "customer" as c
+	left join "rental" as r on r."customer_id" = c."customer_id"
+	group by c."customer_id", c."first_name", c."last_name"
+	order by c."customer_id";
 
 
 
